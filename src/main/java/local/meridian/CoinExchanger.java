@@ -115,7 +115,7 @@ public class CoinExchanger {
    
 
    // incremeting of the counters in the variation by the pointer
-   public static int stepCounters(int[] coins, int[] variation, int coinsIndexPointer, int givenAmount) {
+   private static int stepCounters(int[] coins, int[] variation, int coinsIndexPointer, int givenAmount) {
       boolean overflow;
       do {
          int maxStep = givenAmount / coins[coinsIndexPointer];
