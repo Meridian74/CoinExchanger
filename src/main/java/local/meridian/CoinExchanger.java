@@ -10,7 +10,7 @@ public class CoinExchanger {
    public static void main(String[] args) {
       int[] coins = { 1, 5, 7, 9, 11 };            // values of the changing coins
       List<int[]> resultsList = new ArrayList<>(); // storing appropriate coins variations
-      int amount = 52;                             // example value
+      int amount = 25;                             // example value
 
       int minPiece = calculateMinPiece(coins, amount, resultsList);
       printResult(coins, amount, minPiece, resultsList);
@@ -70,16 +70,13 @@ public class CoinExchanger {
       int indexOfBiggestCoin = coins.length - 1;
       int biggestCoinValue = coins[indexOfBiggestCoin];
 
-      if (givenAmount < biggestCoinValue) {
+      if (givenAmount < biggestCoinValue * biggestCoinValue) {
          return givenAmount;
       }
-
-      int reducedAmount = givenAmount % biggestCoinValue + biggestCoinValue;
-
-      // need to preset the pointer value for faster counting variations
-      int pointerValue = givenAmount / biggestCoinValue - 1;
+      int pointerValue = givenAmount / biggestCoinValue;
+      int reducedAmount = givenAmount - biggestCoinValue * pointerValue;
+      
       variation[indexOfBiggestCoin] = pointerValue;
-
       return reducedAmount;
    }
 
@@ -115,10 +112,10 @@ public class CoinExchanger {
    
 
    // incremeting of the counters in the variation by the pointer
-   private static int stepCounters(int[] coins, int[] variation, int coinsIndexPointer, int givenAmount) {
+   private static int stepCounters(int[] coins, int[] variation, int coinsIndexPointer, int amount) {
       boolean overflow;
       do {
-         int maxStep = givenAmount / coins[coinsIndexPointer];
+         int maxStep = amount / coins[coinsIndexPointer];
          if (variation[coinsIndexPointer] < maxStep) {
             variation[coinsIndexPointer]++;
             overflow = false;
