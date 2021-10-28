@@ -7,20 +7,20 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class CoinExchanger {
-   private int counter;
-   private int minPiece;
-   private int[] coins;
-   private int[] variation;
-   private int[] commonMultiples;
-   private List<int[]> correctVariations = new ArrayList<>();
+   private int counter;             // measure the search
+   private int minPiece;            // searched result   
+   private int[] coins;             // list of coins
+   private int[] commonMultiples;   // help faster checking the all variations
+   private int[] variation;         // storing pieces of the coins AND sum of these pieces here
+   private List<int[]> correctVariations = new ArrayList<>(); // storing correct variations
 
    // constructor
    public CoinExchanger(int[] coins) {
-      this.coins = coins; // list of coins
-      validateCoins(); // if incorrect values are given
-      this.variation = new int[coins.length + 1]; // storing pieces of the coins AND sum of these pieces here
+      this.coins = coins;  
+      validateCoins();     
    }
 
+   // getter
    public List<int[]> getCorrectVariations() {
       return new ArrayList<>(correctVariations);
    }
@@ -44,21 +44,29 @@ public class CoinExchanger {
 
    // initializer
    private void init(int amount) {
-      this.correctVariations.clear();
+      this.variation = new int[coins.length + 1]; 
+      this.correctVariations.clear();              
       this.counter = 0;
       this.minPiece = amount / coins[0];
       this.commonMultiples = calculateCommonMultiples(amount);
+      
+      // eliminating of unnecessary calculations 
+      int last = coins.length - 1;
+      int reducer = 0;
+      if (last > 0) reducer = amount - this.coins[last] * this.coins[last - 1];
+      if (reducer > 0) this.variation[last] = amount / reducer;   
    }
 
    // class main operator
    public int calculateMinPiece(int amount) {
+      // initializing
       validateAmount(amount);
       init(amount);
 
       // searching variations will be ended when the pointer is overflowed!
       int pointer = 0;
       while (pointer < coins.length) {
-         counter++; // measure the effectivness of the algorythm
+         this.counter++; 
          pointer = nextVariation(pointer, amount);
 
          int pieceOfCoins = calculatePieces();
@@ -92,7 +100,7 @@ public class CoinExchanger {
          while (num % coins[i + 1] != 0) {
             num = num + coins[i];
          }
-         multiples[i] = num / coins[i];
+         multiples[i] = num / coins[i] - 1;
       }
       multiples[coins.length - 1] = amount / coins[coins.length - 1];
 
@@ -134,9 +142,9 @@ public class CoinExchanger {
    private int nextVariation(int pointer, int amount) {
       boolean overflow;
       do {
+         variation[pointer]++;
          int value = variation[pointer] * coins[pointer];
-         if (variation[pointer] < commonMultiples[pointer] && value < amount) {
-            variation[pointer]++;
+         if (variation[pointer] <= commonMultiples[pointer] && value <= amount) {
             overflow = false;
             pointer = 0;
          } else { // stepping the next coins index
