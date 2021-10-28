@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class CoinExchanger {
-   private int counter;             // measure the search
+   private long counter;            // measure the search
    private int minPiece;            // searched result   
    private int[] coins;             // list of coins
    private int[] commonMultiples;   // help faster checking the all variations
