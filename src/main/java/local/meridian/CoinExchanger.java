@@ -10,30 +10,28 @@ public class CoinExchanger {
    public static void main(String[] args) {
       int[] coins = { 1, 5, 7, 9, 11 };            // values of the changing coins
       List<int[]> resultsList = new ArrayList<>(); // storing appropriate coins variations
-      int amount = 25;                             // example value
-
+      int amount = 25;                             // example amount
+      
       int minPiece = calculateMinPiece(coins, amount, resultsList);
       printResult(coins, amount, minPiece, resultsList);
    }
    
    
-   public static int calculateMinPiece(int[] coins, int givenAmount, List<int[]> resultsList) {
-      validateCoinsAndAmount(coins, givenAmount);  // if incorrect values are given
+   public static int calculateMinPiece(int[] coins, int amount, List<int[]> resultsList) {
+      validateCoinsAndAmount(coins, amount);       // if incorrect values are given
       int[] variation = new int[coins.length + 1]; // storing pieces of the coins AND sum of these pieces here
-      int minPiece = givenAmount / coins[0];       // previously excluded the lesser than 1 values!
+      int minPiece = amount / coins[0];            // previously excluded the lesser than 1 values!
+      int[] commonMultiples = calculateCommonMultiples(coins, amount);
 
-      // this precalulation needs for faster calculating if the given amount is a big number!
-      int reducedAmount = precalculatingWithTheBiggestCoin(coins, givenAmount, variation);
-
-      // searching variations will be ended when the counterPointer is overflowed!
-      int counterPointer = 0;
-      while (counterPointer < coins.length) {
+      // searching variations will be ended when the pointer is overflowed!
+      int pointer = 0;
+      while (pointer < coins.length) {
          int sumCoinsValue = calculateSum(coins, variation);
          int pieceOfCoins = calculatePieces(coins, variation);
          variation[coins.length] = pieceOfCoins;
 
          // update list of result with appropriate coin variations
-         if (sumCoinsValue == givenAmount) {
+         if (sumCoinsValue == amount) {
             resultsList.add(Arrays.copyOf(variation, variation.length));
             // update minimum coins piece
             if (pieceOfCoins < minPiece) {
@@ -41,13 +39,20 @@ public class CoinExchanger {
             }
          }
 
-         counterPointer = stepCounters(coins, variation, counterPointer, reducedAmount);
+         pointer = nextVariation(coins, variation, pointer, amount);
       }
 
       return minPiece;
    }
    
    
+   private static int[] calculateCommonMultiples(int[] coins, int amount) {
+      int[] multiples = new int[coins.length];
+      // TODO: next day...
+      return null;
+   }
+
+
    private static int calculateSum(int[] coins, int[] variation) {
       int sum = 0;
       for (int i = 0; i < coins.length; i++) {
@@ -62,22 +67,6 @@ public class CoinExchanger {
          sum += variation[i];
       }
       return sum;
-   }
-
-
-   // preset the biggest coin counter and return the reduced amount
-   private static int precalculatingWithTheBiggestCoin(int[] coins, int givenAmount, int[] variation) {
-      int indexOfBiggestCoin = coins.length - 1;
-      int biggestCoinValue = coins[indexOfBiggestCoin];
-
-      if (givenAmount < biggestCoinValue * biggestCoinValue) {
-         return givenAmount;
-      }
-      int pointerValue = givenAmount / biggestCoinValue;
-      int reducedAmount = givenAmount - biggestCoinValue * pointerValue;
-      
-      variation[indexOfBiggestCoin] = pointerValue;
-      return reducedAmount;
    }
 
    
@@ -112,26 +101,34 @@ public class CoinExchanger {
    
 
    // incremeting of the counters in the variation by the pointer
-   private static int stepCounters(int[] coins, int[] variation, int coinsIndexPointer, int amount) {
+   private static int nextVariation(int[] coins, int[] variation, int coinsIndex, int amount) {
       boolean overflow;
       do {
-         int maxStep = amount / coins[coinsIndexPointer];
-         if (variation[coinsIndexPointer] < maxStep) {
-            variation[coinsIndexPointer]++;
+         int nextCoinValue;
+         if (coinsIndex < coins.length - 1) {
+            nextCoinValue = coins[coinsIndex] * coins[coinsIndex + 1];
+         }
+         else {
+            nextCoinValue = amount / coins[coinsIndex];
+         }
+
+         int value = variation[coinsIndex] * coins[coinsIndex];
+         if (variation[coinsIndex] < nextCoinValue && value < amount) {
+            variation[coinsIndex]++;
             overflow = false;
-            coinsIndexPointer = 0;
-         } else { // stepping the next counter
-            variation[coinsIndexPointer] = 0;
-            coinsIndexPointer++;
+            coinsIndex = 0;
+         } else { // stepping the next coins index
+            variation[coinsIndex] = 0;
+            coinsIndex++;
             overflow = true;
          }
 
-         if (coinsIndexPointer == coins.length) {
+         if (coinsIndex == coins.length) {
             break;
          }
       } while (overflow);
 
-      return coinsIndexPointer;
+      return coinsIndex;
    }
 
    
@@ -139,6 +136,7 @@ public class CoinExchanger {
    public static void printResult(int[] coins, int amount, int calulatedMinPiece, List<int[]> results) {
       System.out.println("\nVariation of minimal coins need for change:");
       System.out.println("-------------------------------------------");
+      int goodResults = 0;
       for (int[] list : results) {
          if (list[coins.length] == calulatedMinPiece) {
             for (int index = 0; index < list.length - 1; index++) {
@@ -146,12 +144,14 @@ public class CoinExchanger {
                   System.out.printf("(%d): %d  ", coins[index], list[index]);
                }
             }
+            goodResults++;
             System.out.println();
          }
       }
       System.out.println("-------------------------------------------");
       System.out.println(calulatedMinPiece + 
-            " coin(s) need for this(these) variation(s) to change the amount: " + amount + ".\n");
+            " coin(s) need for this(these) variation(s) to change the amount: " + amount);
+      System.out.println("Number of correct variations: " + goodResults + ".\n");
    }
 
 }
