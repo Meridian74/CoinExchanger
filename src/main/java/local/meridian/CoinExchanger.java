@@ -11,20 +11,20 @@ public class CoinExchanger {
    private int minPiece;
    private int[] coins;
    private int[] variation;
-   private int[] commonMultiples; 
+   private int[] commonMultiples;
    private List<int[]> correctVariations = new ArrayList<>();
-   
+
    // constructor
    public CoinExchanger(int[] coins) {
       this.coins = coins; // list of coins
       validateCoins(); // if incorrect values are given
       this.variation = new int[coins.length + 1]; // storing pieces of the coins AND sum of these pieces here
    }
-   
+
    public List<int[]> getCorrectVariations() {
       return new ArrayList<>(correctVariations);
    }
-   
+
    // validator
    private void validateCoins() {
       if (this.coins == null)
@@ -64,8 +64,7 @@ public class CoinExchanger {
          int pieceOfCoins = calculatePieces();
          if (pieceOfCoins > minPiece) {
             continue;
-         }
-         else {
+         } else {
             variation[coins.length] = pieceOfCoins;
             storeCorrectVariation(amount, pieceOfCoins);
          }
@@ -77,10 +76,11 @@ public class CoinExchanger {
    private void storeCorrectVariation(int amount, int pieceOfCoins) {
       int sumCoinsValue = calculateSum();
       if (sumCoinsValue == amount) {
-         this.correctVariations.add(Arrays.copyOf(this.variation, this.variation.length));
          if (pieceOfCoins < minPiece) {
             this.minPiece = pieceOfCoins;
+            correctVariations.clear();
          }
+         this.correctVariations.add(Arrays.copyOf(this.variation, this.variation.length));
       }
    }
 
@@ -152,28 +152,23 @@ public class CoinExchanger {
 
       return pointer;
    }
-   
+
    // class result printer -- instead of toString()
    public void printResult(int amount) {
       System.out.println("\n" + this.counter + " cycle(s) were required for this calculation.");
       System.out.println("Variation of minimal coins need for change:");
       System.out.println("------------------------------------------------------");
-      int goodResults = 0;
       for (int[] list : this.correctVariations) {
-         if (list[coins.length] == this.minPiece) {
-            for (int index = 0; index < list.length - 1; index++) {
-               if (list[index] > 0) {
-                  System.out.printf("(%d): %d  ", this.coins[index], list[index]);
-               }
+         for (int index = 0; index < list.length - 1; index++) {
+            if (list[index] > 0) {
+               System.out.printf("(%d): %d  ", this.coins[index], list[index]);
             }
-            goodResults++;
-            System.out.println();
          }
+         System.out.println();
       }
       System.out.println("-------------------------------------------------------");
-      System.out.println(this.minPiece + 
-            " coin(s) need for this(these) variation(s) to change the amount: " + amount);
-      System.out.println("Number of correct variations: " + goodResults + ".\n");
+      System.out.println(this.minPiece + " coin(s) need for this(these) variation(s) to change the amount: " + amount);
+      System.out.println("Number of correct variations: " + this.correctVariations.size() + ".\n");
    }
-   
+
 } // end of class
