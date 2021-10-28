@@ -1,67 +1,105 @@
 package local.meridian;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class CoinExchanger {
-   public static void main(String[] args) {
-      int[] coins = { 1, 5, 7, 9, 11 };            // values of the changing coins
-      List<int[]> resultsList = new ArrayList<>(); // storing appropriate coins variations
-      int amount = 25;                             // example amount
-      
-      int minPiece = calculateMinPiece(coins, amount, resultsList);
-      printResult(coins, amount, minPiece, resultsList);
+   private int counter;
+   private int minPiece;
+   private int[] coins;
+   private int[] variation;
+   private int[] commonMultiples; 
+   private List<int[]> correctVariations = new ArrayList<>();
+   
+   // constructor
+   public CoinExchanger(int[] coins) {
+      this.coins = coins; // list of coins
+      validateCoins(); // if incorrect values are given
+      this.variation = new int[coins.length + 1]; // storing pieces of the coins AND sum of these pieces here
    }
    
+   public List<int[]> getCorrectVariations() {
+      return new ArrayList<>(correctVariations);
+   }
    
-   public static int calculateMinPiece(int[] coins, int amount, List<int[]> resultsList) {
-      validateCoinsAndAmount(coins, amount);       // if incorrect values are given
-      int[] variation = new int[coins.length + 1]; // storing pieces of the coins AND sum of these pieces here
-      int minPiece = amount / coins[0];            // previously excluded the lesser than 1 values!
-      int[] commonMultiples = calculateCommonMultiples(coins, amount);
+   // validator
+   private void validateCoins() {
+      if (this.coins == null)
+         throw new IllegalArgumentException("You must give at least one coin value!");
+
+      this.coins = sortCoins(this.coins);
+      if (this.coins[0] < 1)
+         throw new IllegalArgumentException("Coins must have positive value!");
+
+   }
+
+   // validator
+   private void validateAmount(int amount) {
+      if (amount < this.coins[0])
+         throw new IllegalArgumentException("Amount must be bigger or equals than smallest coin!");
+   }
+
+   // initializer
+   private void init(int amount) {
+      this.correctVariations.clear();
+      this.counter = 0;
+      this.minPiece = amount / coins[0];
+      this.commonMultiples = calculateCommonMultiples(amount);
+   }
+
+   // class main operator
+   public int calculateMinPiece(int amount) {
+      validateAmount(amount);
+      init(amount);
 
       // searching variations will be ended when the pointer is overflowed!
       int pointer = 0;
       while (pointer < coins.length) {
-         int sumCoinsValue = calculateSum(coins, variation);
-         int pieceOfCoins = calculatePieces(coins, variation);
-         variation[coins.length] = pieceOfCoins;
+         counter++; // measure the effectivness of the algorythm
+         pointer = nextVariation(pointer, amount);
 
-         // update list of result with appropriate coin variations
-         if (sumCoinsValue == amount) {
-            resultsList.add(Arrays.copyOf(variation, variation.length));
-            // update minimum coins piece
-            if (pieceOfCoins < minPiece) {
-               minPiece = pieceOfCoins;
-            }
+         int pieceOfCoins = calculatePieces();
+         if (pieceOfCoins > minPiece) {
+            continue;
          }
-
-         pointer = nextVariation(coins, variation, pointer, amount);
+         else {
+            variation[coins.length] = pieceOfCoins;
+            storeCorrectVariation(amount, pieceOfCoins);
+         }
       }
 
       return minPiece;
    }
-   
-   
-   private static int[] calculateCommonMultiples(int[] coins, int amount) {
-      int[] multiples = new int[coins.length];
-      // TODO: next day...
-      return null;
-   }
 
-
-   private static int calculateSum(int[] coins, int[] variation) {
-      int sum = 0;
-      for (int i = 0; i < coins.length; i++) {
-         sum += variation[i] * coins[i];
+   private void storeCorrectVariation(int amount, int pieceOfCoins) {
+      int sumCoinsValue = calculateSum();
+      if (sumCoinsValue == amount) {
+         this.correctVariations.add(Arrays.copyOf(this.variation, this.variation.length));
+         if (pieceOfCoins < minPiece) {
+            this.minPiece = pieceOfCoins;
+         }
       }
-      return sum;
    }
 
-   private static int calculatePieces(int[] coins, int[] variation) {
+   private int[] calculateCommonMultiples(int amount) {
+      int[] multiples = new int[coins.length];
+
+      for (int i = 0; i < coins.length - 1; i++) {
+         int num = coins[i];
+         while (num % coins[i + 1] != 0) {
+            num = num + coins[i];
+         }
+         multiples[i] = num / coins[i];
+      }
+      multiples[coins.length - 1] = amount / coins[coins.length - 1];
+
+      return multiples;
+   }
+
+   private int calculatePieces() {
       int sum = 0;
       for (int i = 0; i < coins.length; i++) {
          sum += variation[i];
@@ -69,23 +107,16 @@ public class CoinExchanger {
       return sum;
    }
 
-   
-   // values validating - filtering out faulty cases
-   private static void validateCoinsAndAmount(int[] coins, int givenAmount) {
-      if (coins == null)
-         throw new IllegalArgumentException("You must give at least one coin value!");
-
-      coins = sortCoins(coins);
-      if (coins[0] < 1)
-         throw new IllegalArgumentException("Coins must have positive value!");
-
-      if (givenAmount < coins[0])
-         throw new IllegalArgumentException("Amount must be bigger or equals than smallest coin!");
+   private int calculateSum() {
+      int sum = 0;
+      for (int i = 0; i < coins.length; i++) {
+         sum += variation[i] * coins[i];
+      }
+      return sum;
    }
 
-
    // simplier calulating need to sort coins by its values
-   private static int[] sortCoins(int[] coins) {
+   private int[] sortCoins(int[] coins) {
       int[] sorted;
       Set<Integer> treeSet = new TreeSet<Integer>();
       for (Integer i : coins) {
@@ -98,60 +129,51 @@ public class CoinExchanger {
       sorted = treeSet.stream().mapToInt(x -> x).toArray();
       return sorted;
    }
-   
 
-   // incremeting of the counters in the variation by the pointer
-   private static int nextVariation(int[] coins, int[] variation, int coinsIndex, int amount) {
+   // incremeting the counter at the pointer in the variation
+   private int nextVariation(int pointer, int amount) {
       boolean overflow;
       do {
-         int nextCoinValue;
-         if (coinsIndex < coins.length - 1) {
-            nextCoinValue = coins[coinsIndex] * coins[coinsIndex + 1];
-         }
-         else {
-            nextCoinValue = amount / coins[coinsIndex];
-         }
-
-         int value = variation[coinsIndex] * coins[coinsIndex];
-         if (variation[coinsIndex] < nextCoinValue && value < amount) {
-            variation[coinsIndex]++;
+         int value = variation[pointer] * coins[pointer];
+         if (variation[pointer] < commonMultiples[pointer] && value < amount) {
+            variation[pointer]++;
             overflow = false;
-            coinsIndex = 0;
+            pointer = 0;
          } else { // stepping the next coins index
-            variation[coinsIndex] = 0;
-            coinsIndex++;
+            variation[pointer] = 0;
+            pointer++;
             overflow = true;
          }
 
-         if (coinsIndex == coins.length) {
+         if (pointer == coins.length) {
             break;
          }
       } while (overflow);
 
-      return coinsIndex;
+      return pointer;
    }
-
    
-   // printing result
-   public static void printResult(int[] coins, int amount, int calulatedMinPiece, List<int[]> results) {
-      System.out.println("\nVariation of minimal coins need for change:");
-      System.out.println("-------------------------------------------");
+   // class result printer -- instead of toString()
+   public void printResult(int amount) {
+      System.out.println("\n" + this.counter + " cycle(s) were required for this calculation.");
+      System.out.println("Variation of minimal coins need for change:");
+      System.out.println("------------------------------------------------------");
       int goodResults = 0;
-      for (int[] list : results) {
-         if (list[coins.length] == calulatedMinPiece) {
+      for (int[] list : this.correctVariations) {
+         if (list[coins.length] == this.minPiece) {
             for (int index = 0; index < list.length - 1; index++) {
                if (list[index] > 0) {
-                  System.out.printf("(%d): %d  ", coins[index], list[index]);
+                  System.out.printf("(%d): %d  ", this.coins[index], list[index]);
                }
             }
             goodResults++;
             System.out.println();
          }
       }
-      System.out.println("-------------------------------------------");
-      System.out.println(calulatedMinPiece + 
+      System.out.println("-------------------------------------------------------");
+      System.out.println(this.minPiece + 
             " coin(s) need for this(these) variation(s) to change the amount: " + amount);
       System.out.println("Number of correct variations: " + goodResults + ".\n");
    }
-
-}
+   
+} // end of class
